@@ -112,9 +112,11 @@ COPY docker/supervisord.conf /etc/supervisord.conf
 ENV GST_PLUGIN_PATH=/usr/local/lib/x86_64-linux-gnu/gstreamer-1.0/
 # Copying out our custom compositor from the build stage
 COPY --from=wolf-builder /usr/local/lib/x86_64-linux-gnu/gstreamer-1.0/* $GST_PLUGIN_PATH
-# cargo cinstall puts this under the libdir it was given, not directly in
-# /usr/local/lib, so copy it from where it actually lands.
-COPY --from=wolf-builder /usr/local/lib/x86_64-linux-gnu/gstreamer-1.0/liblibgstwaylanddisplay* /usr/local/lib/
+# The line that used to be here copied liblibgstwaylanddisplay* into
+# /usr/local/lib. It is dropped on purpose: cargo cinstall puts those files in
+# the libdir it was given, the COPY above already brings them along with the
+# rest of the plugin directory, and the published image does not carry them in
+# /usr/local/lib either.
 
 WORKDIR /wolf
 
