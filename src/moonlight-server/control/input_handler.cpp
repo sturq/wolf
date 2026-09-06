@@ -510,6 +510,9 @@ void touch(const TOUCH_PACKET &pkt, events::StreamSession &session) {
               break;
             case pkts::TOUCH_EVENT_HOVER_LEAVE:
             case pkts::TOUCH_EVENT_CANCEL:
+            case pkts::TOUCH_EVENT_CANCEL_ALL:
+              // wl_touch cancel already drops every active contact, which is exactly
+              // CANCEL_ALL's semantics, so both map onto it.
               screen.cancel();
               break;
             default:
