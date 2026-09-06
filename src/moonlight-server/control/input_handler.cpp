@@ -451,6 +451,12 @@ void utf8_text(const UTF8_TEXT_PACKET &pkt, events::StreamSession &session) {
   }
 }
 
+/**
+ * Upper bound on simultaneous touch contacts, used to clear them all when a client
+ * cancels the whole gesture. Moonlight clients do not report more than this.
+ */
+constexpr int MAX_TOUCH_CONTACTS = 10;
+
 void touch(const TOUCH_PACKET &pkt, events::StreamSession &session) {
   bool has_touch_device = session.touch_screen->has_value();
   if (!has_touch_device) {
@@ -491,6 +497,15 @@ void touch(const TOUCH_PACKET &pkt, events::StreamSession &session) {
             case pkts::TOUCH_EVENT_HOVER_LEAVE:
             case pkts::TOUCH_EVENT_CANCEL:
               screen.release_finger(finger_id);
+              break;
+            case pkts::TOUCH_EVENT_CANCEL_ALL:
+              // Clients send this with pointer_id 0 and no coordinates, and it means
+              // "drop every active contact", not "drop finger 0". Inputtino's
+              // TouchScreen exposes no release-all, and releasing a slot that is not
+              // currently down is a no-op, so walk the whole contact range.
+              for (int finger = 0; finger < MAX_TOUCH_CONTACTS; finger++) {
+                screen.release_finger(finger);
+              }
               break;
             default:
               logs::log(logs::warning, "[INPUT] Unknown touch event type {}", (int)pkt.event_type);
